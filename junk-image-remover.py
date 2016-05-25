@@ -211,3 +211,6 @@ elif method == 3:
             print("Unused images have been moved to " + unusedPath)
         except UnicodeEncodeError:
             pass
+        
+input("Press Enter to exit.")
+sys.exit()
