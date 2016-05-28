@@ -13,7 +13,7 @@ compressed = ""
 topicsPath = ""
 searchPaths = ""
 method = 1
-slash = ""
+slash = "\\"
 counter = 0
 counterDeleted = 0
 counterRemoved = 0
@@ -33,8 +33,8 @@ while True:
     else:
         if not path:
             path = os.path.dirname(os.path.abspath(__file__))
-        if path[-1:] != "\\":
-            slash = "\\"
+        if path[-1:] == "\\":
+            path = path[:-1]
         foundProject = False
         for file in os.listdir(path):
             if file.lower().endswith(".hmxz") or file.lower().endswith(".hmxp"):
@@ -97,6 +97,13 @@ else:
     input("FAILED: Project file is corrupted. Press Enter to exit.")
     sys.exit()
 
+
+def fixvariables(string):
+    string = string.replace('<%', '&lt;%')
+    string = string.replace('%>', '%&gt;')
+    return string
+
+
 for SearchPath in searchPaths:
     if SearchPath[:1] == ".":
         # Search paths always end with \
@@ -121,24 +128,32 @@ for SearchPath in searchPaths:
                     topics = [f for f in os.listdir(topicsPath) if os.path.isfile(os.path.join(topicsPath, f))]
                 for topic in topics:
                     allowSearch = False
-                    if compressed:
-                        if topic.startswith('Topics') and topic.lower().endswith('.xml'):
-                            topic = archive.read(topic).lower()
-                            root = XMLTree.fromstring(topic)
+                    if topic.lower().endswith('.xml'):
+                        if compressed:
+                            if topic.startswith('Topics'):
+                                topicData = archive.read(topic)
+                                try:
+                                    root = XMLTree.fromstring(topicData)
+                                except XMLTree.ParseError:
+                                    topicData = topicData.decode("utf-8")
+                                    topicData = fixvariables(topicData)
+                                    root = XMLTree.fromstring(topicData)
+                                allowSearch = True
+                        else:
+                            topicPath = topicsPath + topic
+                            try:
+                                tree = XMLTree.parse(topicPath)
+                                root = tree.getroot()
+                            except XMLTree.ParseError:
+                                fileData = None
+                                with open(topicPath, encoding='utf-8', mode='r') as file:
+                                    fileData = file.read()
+                                fileData = fixvariables(fileData)
+                                root = XMLTree.fromstring(fileData)
                             allowSearch = True
-                        else:
-                            allowSearch = False
-                    else:
-                        topicPath = topicsPath + topic
-                        tree = XMLTree.parse(topicPath)
-                        root = tree.getroot()
-                        allowSearch = True
                     if allowSearch:
-                        if not compressed:
-                            imageTag = root.find(".//*image[@src='" + image + "']")
-                            if imageTag is None:
-                                imageTag = root.find(".//*image[@src='" + image.lower() + "']")
-                        else:
+                        imageTag = root.find(".//*image[@src='" + image + "']")
+                        if imageTag is None:
                             imageTag = root.find(".//*image[@src='" + image.lower() + "']")
                         if imageTag is not None:
                             imageFound = True
@@ -177,7 +192,7 @@ for SearchPath in searchPaths:
                                     print("<cannot read filename>", end='')
                                 print("\". Probably, it is in use or is already deleted.")
                     elif method == 3:
-                        unusedPath = path + slash + "Trash\\"
+                        unusedPath = path + "\Trash\\"
                         if not os.path.exists(unusedPath):
                             os.makedirs(unusedPath)
                         try:
@@ -214,6 +229,6 @@ elif method == 3:
             print("Unused images have been moved to " + unusedPath)
         except UnicodeEncodeError:
             pass
-        
+
 input("Press Enter to exit.")
 sys.exit()
