@@ -2,6 +2,7 @@ import os
 import sys
 import xml.etree.ElementTree as XMLTree
 import zipfile
+import platform
 
 print("JUNK IMAGE REMOVER v.2")
 print("Helps you remove all unused image files from your H&M projects")
@@ -18,6 +19,11 @@ counterDeleted = 0
 counterRemoved = 0
 imageExtensions = [".png", ".jpg", ".jpeg", ".emf", ".gif", ".wmf", ".bmp"]
 unusedPath = ""
+osPlatform = platform.system()
+
+if osPlatform != "Windows":
+    input("\nYour OS is not supported. Press Enter to exit.")
+    sys.exit()
 
 while True:
     print("\nEnter a full path to the directory where your project is.")
