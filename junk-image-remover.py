@@ -9,7 +9,15 @@ print("(c) 2016 Nikita Kovin")
 
 project = ""
 compressed = ""
-TopicsPath = ""
+topicsPath = ""
+searchPaths = ""
+method = 1
+slash = ""
+counter = 0
+counterDeleted = 0
+counterRemoved = 0
+imageExtensions = [".png", ".jpg", ".jpeg", ".emf", ".gif", ".wmf", ".bmp"]
+unusedPath = ""
 
 while True:
     print("\nEnter a full path to the directory where your project is.")
@@ -19,9 +27,7 @@ while True:
     else:
         if not path:
             path = os.path.dirname(os.path.abspath(__file__))
-        if path[-1:] == "\\":
-            slash = ""
-        else:
+        if path[-1:] != "\\":
             slash = "\\"
         foundProject = False
         for file in os.listdir(path):
@@ -32,12 +38,12 @@ while True:
                 else:
                     compressed = False
                     if os.path.isdir(path + "\Topics"):
-                        TopicsPath = path + "\Topics\\"
+                        topicsPath = path + "\Topics\\"
                 foundProject = True
                 break
         if not foundProject or not os.path.isfile(project):
             print("\nNo H&M project found in the directory. Please enter a valid path.")
-        elif not compressed and not TopicsPath:
+        elif not compressed and not topicsPath:
             print("\nThe Topics directory is missing...")
         else:
             break
@@ -48,8 +54,6 @@ try:
     print(project)
 except UnicodeEncodeError:
     print("<cannot read filename>")
-
-method = 1
 
 while True:
     print("\nWhat shall we do with unused pictures?")
@@ -68,8 +72,6 @@ while True:
 
 print("\nThe selected method is", method, "\n")
 
-SearchPaths = ""
-
 if compressed:
     archive = zipfile.ZipFile(project, 'r')
     project = archive.read('project.hmxp')
@@ -81,20 +83,15 @@ else:
 searchPathTag = root.find(".//*config-value[@name='searchpath']")
 if searchPathTag is not None:
     for elem in searchPathTag.itertext():
-        SearchPaths = elem.split(";")
-    if not SearchPaths:
+        searchPaths = elem.split(";")
+    if not searchPaths:
         input("FAILED: Cannot find project search paths. Press Enter to exit.")
         sys.exit()
 else:
     input("FAILED: Project file is corrupted. Press Enter to exit.")
     sys.exit()
 
-counter = 0
-counterDeleted = 0
-counterRemoved = 0
-imageExtensions = [".png", ".jpg", ".jpeg", ".emf", ".gif", ".wmf", ".bmp"]
-
-for SearchPath in SearchPaths:
+for SearchPath in searchPaths:
     if SearchPath[:1] == ".":
         # Search paths always end with \
         SearchPath = path + SearchPath[1:]
@@ -115,7 +112,7 @@ for SearchPath in SearchPaths:
                 if compressed:
                     topics = archive.namelist()
                 else:
-                    topics = [f for f in os.listdir(TopicsPath) if os.path.isfile(os.path.join(TopicsPath, f))]
+                    topics = [f for f in os.listdir(topicsPath) if os.path.isfile(os.path.join(topicsPath, f))]
                 for topic in topics:
                     allowSearch = False
                     if compressed:
@@ -126,7 +123,7 @@ for SearchPath in SearchPaths:
                         else:
                             allowSearch = False
                     else:
-                        topicPath = TopicsPath + topic
+                        topicPath = topicsPath + topic
                         tree = XMLTree.parse(topicPath)
                         root = tree.getroot()
                         allowSearch = True
