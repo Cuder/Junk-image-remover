@@ -104,19 +104,21 @@ def fixvariables(string):
     return string
 
 
-for SearchPath in searchPaths:
-    if SearchPath[:1] == ".":
-        # Search paths always end with \
-        SearchPath = path + SearchPath[1:]
-    if not os.path.isdir(SearchPath):
+for searchPath in searchPaths:
+    # Search paths always end with \
+    if searchPath[:2] == "..":
+        searchPath = os.path.normpath(str.join('\\', (path, searchPath)))
+    elif searchPath[:2] == ".\\":
+        searchPath = path + searchPath[1:]
+    if not os.path.isdir(searchPath):
         print("WARNING: Search path ", end='')
         try:
-            print(SearchPath, end='')
+            print(searchPath, end='')
         except UnicodeEncodeError:
-            print("<cannot read path>")
+            print("<cannot read path>", end='')
         print(" does not exist or is unreadable")
     else:
-        images = [f for f in os.listdir(SearchPath) if os.path.isfile(os.path.join(SearchPath, f))]
+        images = [f for f in os.listdir(searchPath) if os.path.isfile(os.path.join(searchPath, f))]
         for image in images:
             if image.lower().endswith(".xml"):
                 break
@@ -160,7 +162,7 @@ for SearchPath in searchPaths:
                             break
                 if imageFound is False:
                     counter += 1
-                    imagePath = SearchPath + image
+                    imagePath = searchPath + image
                     if method == 1 or method == 2:
                         ack = "n"
                         if method == 1:
